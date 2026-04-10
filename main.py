@@ -28,8 +28,8 @@ if not BOT_TOKEN:
     logger.error("❌ BOT_TOKEN not found! Please set your bot token in environment variables.")
     sys.exit(1)
 
-REQUIRED_CHANNELS = ["@your channel username"]
-GROUP_JOIN_LINK = "https://t.me/your_group_link"
+REQUIRED_CHANNELS = ["@like_freefire_hub"]
+GROUP_JOIN_LINK = "https://t.me/FFLIKE_GROUP"
 OWNER_ID = 8689780416 #Example: 6282811167
 OWNER_USERNAME = "@your username"
 
