@@ -6,6 +6,8 @@ import re
 import schedule
 import time
 import threading
+import json
+import os
 from datetime import datetime
 from telegram import Bot, Update
 from telegram.ext import Application, CommandHandler, ContextTypes
@@ -16,10 +18,12 @@ from telegram.constants import ParseMode
 # ═══════════════════════════════════════════════════
 
 BOT_TOKEN       = "8670599725:AAEhZBfjgSwxyFci_BaCUub5Zvqd4n6cRfo"   # ← Cambia
-CHANNEL_ID      = "-1003850833235"                                  # ← Cambia
+CHANNEL_ID      = "-1003990718761"                                  # ← Cambia
 
 DEFAULT_QUERY   = "pussy"          
-DEFAULT_INTERVAL = 3               
+DEFAULT_INTERVAL_MINUTES = 15       # ← Intervalo por defecto en MINUTOS enteros (Ej: 15)
+
+DATA_FILE = "xnxx_bot_data.json"   # Archivo de persistencia
 
 # ═══════════════════════════════════════════════════
 
@@ -32,7 +36,7 @@ log = logging.getLogger(__name__)
 # Estado global
 state = {
     "query": DEFAULT_QUERY,
-    "interval": DEFAULT_INTERVAL,
+    "interval_minutes": DEFAULT_INTERVAL_MINUTES,  # Guardamos internamente en minutos
     "active": False,
     "last_post": None,
     "total_posts": 0,
@@ -44,6 +48,46 @@ posted_urls = set()
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:136.0) Gecko/20100101 Firefox/136.0"
 }
+
+# ═══════════════════════════════════════════════════
+#  PERSISTENCIA (JSON)
+# ═══════════════════════════════════════════════════
+
+def load_data():
+    global posted_urls, state
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            posted_urls = set(data.get("posted_urls", []))
+            state.update({
+                "query": data.get("query", DEFAULT_QUERY),
+                "interval_minutes": data.get("interval_minutes", DEFAULT_INTERVAL_MINUTES),
+                "total_posts": data.get("total_posts", 0),
+                "last_post": data.get("last_post"),
+            })
+            log.info(f"✅ Datos cargados: {len(posted_urls)} URLs posteadas | {state['total_posts']} posts totales")
+        except Exception as e:
+            log.error(f"Error cargando datos: {e}")
+    else:
+        log.info("📁 Archivo de datos no encontrado. Iniciando desde cero.")
+
+
+def save_data():
+    try:
+        data = {
+            "posted_urls": list(posted_urls),
+            "query": state["query"],
+            "interval_minutes": state["interval_minutes"],
+            "total_posts": state["total_posts"],
+            "last_post": state["last_post"],
+        }
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        log.error(f"Error guardando datos: {e}")
+
 
 # ═══════════════════════════════════════════════════
 #  FUNCIONES XNXX
@@ -109,11 +153,6 @@ def get_direct_video_url(page_url: str):
                 if '.mp4' in video_url.lower():
                     break
 
-        if video_url:
-            log.info(f"✅ URL encontrada: {video_url[:100]}...")
-        else:
-            log.warning(f"⚠️ No se encontró URL directa en {page_url}")
-
         return {
             "title": title[:200],
             "video_url": video_url,
@@ -147,9 +186,8 @@ async def publish_now(bot: Bot, query: str) -> bool:
 
         caption = (
             f"🔥 **{info['title']}**\n\n"
-            f"🔍 `{query}`\n"
-            f"🕒 {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
-            f"🌸 XNXX AutoBot 2026"
+            f"🕒 Release Date {datetime.now().strftime('%d/%m/%Y')}\n"
+            f"🔗 https://youtube.com/@loveclubyt"
         )
 
         try:
@@ -167,6 +205,8 @@ async def publish_now(bot: Bot, query: str) -> bool:
             posted_urls.add(video["link"])
             state["last_post"] = datetime.now().strftime("%d/%m/%Y %H:%M")
             state["total_posts"] += 1
+            
+            save_data()  
             
             log.info("✅ Video publicado exitosamente")
             return True
@@ -198,13 +238,20 @@ def _run_sync():
 def _scheduler_loop():
     while True:
         schedule.run_pending()
-        time.sleep(30)
+        time.sleep(10)
 
 
 def start_scheduler():
     schedule.clear()
-    schedule.every(state["interval"]).hours.do(_run_sync)
-    log.info(f"⏰ Scheduler configurado: cada {state['interval']} horas | Tema: {state['query']}")
+    total_minutes = state["interval_minutes"]
+    
+    if total_minutes < 1:
+        total_minutes = 1
+        
+    schedule.every(total_minutes).minutes.do(_run_sync)
+    
+    # Log formateado para consola
+    log.info(f"⏰ Scheduler configurado: cada {total_minutes} minutos | Tema: {state['query']}")
 
 
 def ensure_scheduler_thread():
@@ -214,6 +261,18 @@ def ensure_scheduler_thread():
     t = threading.Thread(target=_scheduler_loop, name="xnxx_scheduler", daemon=True)
     t.start()
     log.info("🔄 Hilo del scheduler iniciado")
+
+
+def format_interval_text(total_minutes: int) -> str:
+    """Traduce los minutos totales a texto entendible (Horas y minutos)"""
+    if total_minutes < 60:
+        return f"{total_minutes} minuto(s)"
+    
+    h = total_minutes // 60
+    m = total_minutes % 60
+    if m > 0:
+        return f"{h} hora(s) y {m} minuto(s)"
+    return f"{h} hora(s)"
 
 
 # ═══════════════════════════════════════════════════
@@ -227,7 +286,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "• `/post` → Publicar ahora\n"
         "• `/autopost` → Activar automático\n"
         "• `/setquery <tema>` → Cambiar búsqueda\n"
-        "• `/setinterval <horas>` → Cambiar intervalo\n"
+        "• `/setinterval <tiempo>` → Cambiar intervalo (Ej: `5m` o `1h` o `1.5h`)\n"
         "• `/status` → Ver estado\n"
         "• `/stop` → Detener\n",
         parse_mode=ParseMode.MARKDOWN
@@ -251,10 +310,11 @@ async def cmd_autopost(update: Update, context: ContextTypes.DEFAULT_TYPE):
     start_scheduler()
     ensure_scheduler_thread()
 
+    time_text = format_interval_text(state["interval_minutes"])
     await update.message.reply_text(
         "🚀 **AutoPost Activado**\n\n"
         f"Tema: `{state['query']}`\n"
-        f"Intervalo: cada {state['interval']} hora(s)\n"
+        f"Intervalo: cada {time_text}\n"
         "Publicando primero ahora...",
         parse_mode=ParseMode.MARKDOWN
     )
@@ -268,30 +328,63 @@ async def cmd_setquery(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state["query"] = query
     if state["active"]:
         start_scheduler()
+    save_data()
     await update.message.reply_text(f"✅ Tema cambiado a: **{query}**", parse_mode=ParseMode.MARKDOWN)
 
 
 async def cmd_setinterval(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        return await update.message.reply_text(
+            "❌ Ejemplo de uso:\n"
+            "• `/setinterval 5m` (Cada 5 minutos)\n"
+            "• `/setinterval 45m` (Cada 45 minutos)\n"
+            "• `/setinterval 1h` (Cada 1 hora)\n"
+            "• `/setinterval 2.5h` (Cada 2 horas y 30 minutos)"
+        )
+
+    raw_input = context.args[0].lower().strip()
+    calculated_minutes = 0
+
     try:
-        hours = float(context.args[0])
-        if hours < 0.5: raise ValueError
-    except:
-        return await update.message.reply_text("❌ Ejemplo: `/setinterval 3`")
+        if raw_input.endswith('m'):
+            # Formato en minutos: "5m" -> 5
+            calculated_minutes = int(float(raw_input.replace('m', '')))
+        elif raw_input.endswith('h'):
+            # Formato en horas: "1.5h" -> 1.5 * 60 = 90
+            calculated_minutes = int(float(raw_input.replace('h', '')) * 60)
+        else:
+            # Si no ponen letra, asumimos que son Horas como antes
+            calculated_minutes = int(float(raw_input) * 60)
+
+        if calculated_minutes < 1: 
+            raise ValueError
+
+    except Exception:
+        return await update.message.reply_text("❌ Formato inválido. Usa por ejemplo: `5m` o `1h`")
     
-    state["interval"] = hours
+    state["interval_minutes"] = calculated_minutes
     if state["active"]:
         start_scheduler()
-    await update.message.reply_text(f"✅ Intervalo cambiado a **{hours}** horas")
+    save_data()
+    
+    time_text = format_interval_text(calculated_minutes)
+    await update.message.reply_text(f"✅ Intervalo cambiado a: **{time_text}**")
 
+
+# ═══════════════════════════════════════════════════
+#  STATUS Y STOP
+# ═══════════════════════════════════════════════════
 
 async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status = "🟢 Activo" if state["active"] else "🔴 Detenido"
+    time_text = format_interval_text(state["interval_minutes"])
     await update.message.reply_text(
         f"📊 **Estado XNXX Bot 2026**\n\n"
         f"Estado: {status}\n"
         f"Tema: `{state['query']}`\n"
-        f"Intervalo: {state['interval']}h\n"
+        f"Intervalo: {time_text}\n"
         f"Posts: {state['total_posts']}\n"
+        f"URLs guardadas: {len(posted_urls)}\n"
         f"Último: {state['last_post'] or 'Ninguno'}",
         parse_mode=ParseMode.MARKDOWN
     )
@@ -300,16 +393,13 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state["active"] = False
     schedule.clear()
+    save_data()
     await update.message.reply_text("🛑 **AutoPost detenido**")
 
 
-# ═══════════════════════════════════════════════════
-#  MAIN
-# ═══════════════════════════════════════════════════
-
 def main():
-    print("🔥 XNXX Auto-Bot 2026 Iniciado")
-    print(f"Canal: {CHANNEL_ID} | Tema: {DEFAULT_QUERY}")
+    print("🔥 XNXX Auto-Bot 2026 Iniciado (Soporte Inteligente m/h)")
+    load_data()  
 
     app = Application.builder().token(BOT_TOKEN).build()
 
