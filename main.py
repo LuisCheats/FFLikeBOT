@@ -345,7 +345,7 @@ async def cmd_stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("🛑 **AutoPost detenido**")
 
 
-def main():
+async def main():
     print("🔥 XNXX Auto-Bot 2026 Iniciado en Render")
     load_data()
 
@@ -366,8 +366,18 @@ def main():
         start_scheduler()
         threading.Thread(target=_scheduler_loop, daemon=True, name="xnxx_scheduler").start()
 
-    app.run_polling(drop_pending_updates=True)
+    # Inicializar la app usando async/await nativo debajo del capó de run_polling
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(drop_pending_updates=True)
+    
+    # Mantiene la app corriendo indefinidamente de manera asíncrona
+    while True:
+        await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        log.info("Bot detenido manualmente.")
