@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KYOKO | Perfil</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        :root { 
+            --neon-blue: #c084fc; 
+            --neon-purple: #9333ea;
+            --dark-bg: #0a0414; 
+            --card-bg: #130b20; 
+            --text-main: #f0eaff; 
+            --text-muted: #b8a9d4; 
+            --transition: 0.2s ease;
+        }
+
+        /* Modo claro real */
+        body.light-mode {
+            --dark-bg: #f8f7fc;
+            --card-bg: #ffffff;
+            --text-main: #1e1b2e;
+            --text-muted: #6b5d8f;
+        }
+
+        #safety-block {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 10000; display: block;
+        }
+
+        body { 
+            background-color: var(--dark-bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color var(--transition);
+        }
+
+        .glass { 
+            background: var(--card-bg); 
+            border: 1px solid rgba(147, 51, 234, 0.3); 
+            transition: var(--transition);
+        }
+
+        .input-kazuma { 
+            background: rgba(0,0,0,0.2); 
+            border: 1px solid rgba(147, 51, 234, 0.3); 
+            color: var(--text-main); 
+        }
+
+        body.light-mode .input-kazuma { background: rgba(0,0,0,0.03); border: 1px solid rgba(147, 51, 234, 0.2); }
+        .input-kazuma:focus { border-color: var(--neon-blue); outline: none; }
+
+        .btn-blue { background: var(--neon-blue); color: #000; font-weight: 900; cursor: pointer; }
+        .btn-whatsapp { 
+            background: #25D366; 
+            color: white; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 50px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.3s; 
+        }
+        .btn-whatsapp:hover { 
+            background: #128C7E; 
+            transform: scale(1.02); 
+        }
+
+        .plan-card { 
+            background: linear-gradient(135deg, rgba(192,132,252,0.1), rgba(0,0,0,0.2)); 
+            border-radius: 20px; 
+            padding: 15px; 
+            margin-bottom: 15px;
+            border: 1px solid rgba(192,132,252,0.3);
+            transition: 0.3s;
+        }
+        .plan-card:hover { transform: translateY(-3px); border-color: var(--neon-blue); }
+
+        header { background: rgba(10, 4, 20, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(147, 51, 234, 0.2); }
+        body.light-mode header { background: rgba(255, 255, 255, 0.85); border-bottom: 1px solid rgba(147, 51, 234, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen pb-10">
+    <div id="safety-block"></div>
+
+    <header class="p-4 flex justify-between items-center sticky top-0 z-50">
+        <div class="font-black text-xl tracking-tighter cursor-pointer" onclick="location.href='/dash'">
+            KYOKO <span style="color: var(--neon-blue)">DASH</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="text-xl cursor-pointer" style="color: var(--neon-blue)" onclick="toggleTheme()" id="theme-btn">
+                <i class="fas fa-moon"></i>
+            </div>
+            <button onclick="location.href='/dash'" class="text-xs font-bold bg-white/5 px-4 py-2 rounded-xl border border-white/10 uppercase">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 max-w-2xl">
+        <!-- INFO USUARIO -->
+        <div class="glass rounded-[32px] p-8 mt-6 text-center">
+            <img id="view-img" src="https://files.catbox.moe/03odwx.jpg" class="mx-auto w-[120px] h-[120px] rounded-full border-2 border-[var(--neon-blue)] object-cover" alt="Avatar">
+            <h2 id="view-username" class="text-2xl font-black mt-4 uppercase">---</h2>
+            <p id="view-id" class="text-slate-500 font-bold text-xs mt-1">---</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-6">
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Plan</p>
+                <p id="view-plan" class="text-lg font-black text-yellow-500">---</p>
+            </div>
+            <div class="glass p-5 rounded-3xl">
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Límite</p>
+                <p id="view-requests" class="text-lg font-black text-cyan-500">0</p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN DE PLANES VIP: UNICAMENTE VIP $1 USD -->
+        <div class="glass rounded-[32px] p-8 mt-8">
+            <h3 class="text-sm font-black mb-6 uppercase flex items-center gap-2">
+                <i class="fas fa-crown" style="color: gold;"></i> Mejora tu Plan
+            </h3>
+
+            <!-- VIP - $1 USD (único plan disponible) -->
+            <div class="plan-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <h3 class="text-xl font-black">💎 VIP</h3>
+                        <p class="text-sm text-slate-400">1,500 solicitudes / día</p>
+                        <p class="text-xs text-slate-500">⏱️ 364 días de duración</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="text-2xl font-bold text-green-400">$1 USD</div>
+                        <button onclick="comprarWhatsAppVIP()" class="btn-whatsapp mt-2">
+                            <i class="fab fa-whatsapp"></i> Comprar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDITAR DATOS -->
+        <div class="glass rounded-[32px] p-8 mt-8">
+            <h3 class="text-sm font-black mb-6 uppercase">Editar Datos</h3>
+            <div class="space-y-6">
+                <div class="p-4 rounded-2xl bg-black/20 border border-white/5">
+                    <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Mi API Key</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="view-apikey" class="input-kazuma w-full p-3 rounded-xl font-mono text-xs" readonly>
+                        <button onclick="copyKey()" class="btn-blue px-4 rounded-xl"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+
+                <div class="grid gap-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Avatar (URL)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-img" class="input-kazuma w-full p-3 rounded-xl text-sm" placeholder="URL directa">
+                            <button onclick="updateData('profile_img')" class="btn-blue px-5 rounded-xl text-[10px]">Actualizar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Usuario</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="new-username" class="input-kazuma w-full p-3 rounded-xl text-sm" placeholder="Nombre">
+                            <button onclick="updateData('username')" class="btn-blue px-5 rounded-xl text-[10px]">Actualizar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Contraseña</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="new-pass" class="input-kazuma w-full p-3 rounded-xl text-sm" placeholder="••••••••">
+                            <button onclick="updateData('password')" class="btn-blue px-5 rounded-xl text-[10px]">Actualizar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 mt-2 border-t border-white/5">
+                    <button onclick="logout()" class="w-full bg-red-500/10 text-red-500 p-4 rounded-2xl font-black uppercase text-[10px] border border-red-500/20">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const userData = JSON.parse(localStorage.getItem('kazuma_user'));
+        if (!userData) window.location.href = '/login';
+
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            const icon = themeBtn.querySelector('i');
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            icon.classList.replace(isLight ? 'fa-moon' : 'fa-sun', isLight ? 'fa-sun' : 'fa-moon');
+            localStorage.setItem('dvwilker-theme', isLight ? 'light' : 'dark');
+        }
+
+        async function loadProfile() {
+            if (localStorage.getItem('dvwilker-theme') === 'light') toggleTheme();
+
+            try {
+                const res = await fetch(`/api/auth/me?apiKey=${userData.key}`);
+                const result = await res.json();
+                if (result.status) {
+                    const u = result.data;
+                    document.getElementById('view-username').innerText = u.username;
+                    document.getElementById('view-id').innerText = u.email;
+                    document.getElementById('view-apikey').value = u.key;
+                    document.getElementById('view-requests').innerText = u.requests.limit;
+                    document.getElementById('view-plan').innerText = u.plan.toUpperCase();
+                    if (u.profile_img) document.getElementById('view-img').src = u.profile_img;
+                }
+            } catch (e) { console.error("Error de red"); }
+            document.getElementById('safety-block').style.display = 'none';
+        }
+
+        async function updateData(type) {
+            const inputMap = { 'username': 'new-username', 'password': 'new-pass', 'profile_img': 'new-img' };
+            const val = document.getElementById(inputMap[type]).value.trim();
+            if (!val) return;
+
+            try {
+                const res = await fetch(`/api/auth/update-profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey: userData.key, type, value: val })
+                });
+                const data = await res.json();
+                if (data.status) {
+                    if (type !== 'password') {
+                        userData[type === 'profile_img' ? 'profile_img' : type] = val;
+                        localStorage.setItem('kazuma_user', JSON.stringify(userData));
+                    }
+                    Swal.fire({ title: 'Listo', text: 'Datos guardados', icon: 'success', background: 'var(--card-bg)', color: 'var(--text-main)' }).then(() => location.reload());
+                }
+            } catch (e) { console.error("Error al actualizar"); }
+        }
+
+        function copyKey() {
+            navigator.clipboard.writeText(document.getElementById('view-apikey').value);
+            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiada', showConfirmButton: false, timer: 1000, background: 'var(--card-bg)', color: 'var(--text-main)' });
+        }
+
+        function logout() { localStorage.clear(); window.location.href = '/login'; }
+
+        // ============== UNICA FUNCION DE COMPRA: VIP $1 USD ==============
+        function comprarWhatsAppVIP() {
+            const mensaje = `Hola, quiero adquirir el plan VIP de $1 USD. Beneficios: 1,500 solicitudes por día durante 364 días. Mi usuario es: ${userData.username}. Mi email es: ${userData.email}. ¡Gracias!`;
+            const url = `https://wa.me/50765836410?text=${encodeURIComponent(mensaje)}`;
+            window.open(url, '_blank');
+        }
+
+        window.onload = () => {
+            loadProfile();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+[
+  {
+    "username": "7Noonly",
+    "email": "luisxit222@gmail.com",
+    "password": "XIT222",
+    "key": "7nonnly",
+    "role": "admin",
+    "plan": "ADMIN VIP",
+    "limit": 100000,
+    "requestToday": 0,
+    "totalRequest": 0,
+    "lastRequestDate": "2026-05-07"
+  }
+]

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="monetag" content="fa4a500bf0ec30efc973f9bd32fa444b">
+    <title>KYOKO API</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-blue: #c084fc;
+            --neon-purple: #9333ea;
+            --dark-bg: #0a0414;
+            --card-bg: #130b20;
+            --sidebar-bg: #0e0719;
+            --text-main: #f0eaff;
+            --text-muted: #b8a9d4;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modo claro - colores claros reales */
+        body.light-mode {
+            --dark-bg: #f8f7fc;
+            --card-bg: #ffffff;
+            --sidebar-bg: #fefefe;
+            --text-main: #1e1b2e;
+            --text-muted: #6b5d8f;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            overflow-x: hidden;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        /* Header Estilo Gohan hack */
+        header {
+            background: rgba(10, 4, 20, 0.94);
+            backdrop-filter: blur(15px);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: background var(--transition);
+        }
+
+        body.light-mode header {
+            background: rgba(255, 255, 255, 0.9);
+            border-bottom: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .brand {
+            font-weight: 900;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .brand span { color: var(--neon-blue); }
+
+        .header-icons { display: flex; gap: 15px; align-items: center; }
+        
+        .btn-circle {
+            background: rgba(147, 51, 234, 0.15);
+            border: none;
+            color: #e9d5ff;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        body.light-mode .btn-circle {
+            background: rgba(147, 51, 234, 0.1);
+            color: #6b21a5;
+        }
+
+        /* Banner Principal Inclinado */
+        .hero-banner {
+            position: relative;
+            padding: 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .hero-shape {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-5deg);
+            width: 120%;
+            height: 300px;
+            background: linear-gradient(135deg, #a855f7 0%, #6b21a5 100%);
+            opacity: 0.35;
+            filter: blur(80px);
+            z-index: -1;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(107, 33, 165, 0.5) 100%);
+            padding: 2px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 400px;
+            transform: rotate(-2deg);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 0 1px rgba(168, 85, 247, 0.3);
+        }
+
+        body.light-mode .hero-card {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(107, 33, 165, 0.35) 100%);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1), 0 0 0 1px rgba(168, 85, 247, 0.3);
+        }
+
+        .hero-card-inner {
+            background: var(--card-bg);
+            border-radius: 28px;
+            overflow: hidden;
+            position: relative;
+            transition: background var(--transition);
+        }
+
+        .hero-card-inner img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .status-badge {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10, 4, 20, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid rgba(168, 85, 247, 0.6);
+            color: #f3e8ff;
+        }
+
+        body.light-mode .status-badge {
+            background: rgba(255, 255, 255, 0.85);
+            color: #1e1b2e;
+            border: 1px solid rgba(147, 51, 234, 0.4);
+        }
+
+        .dot { width: 8px; height: 8px; background: #d8b4fe; border-radius: 50%; box-shadow: 0 0 10px #c084fc; }
+
+        /* Centro de Información */
+        .info-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .info-section h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .info-section h1 span {
+            display: block;
+            background: linear-gradient(to right, #c084fc, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .description {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 300px;
+            margin: 20px auto;
+            transition: color var(--transition);
+        }
+
+        /* Stats Estilo Moderno */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 0 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-item {
+            background: rgba(147, 51, 234, 0.12);
+            padding: 15px 5px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+            transition: background var(--transition);
+        }
+
+        body.light-mode .stat-item {
+            background: rgba(147, 51, 234, 0.08);
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .stat-item .val {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: #d8b4fe;
+        }
+
+        body.light-mode .stat-item .val {
+            color: #7c3aed;
+        }
+
+        .stat-item .lbl {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #b8a9d4;
+            font-weight: 800;
+        }
+
+        body.light-mode .stat-item .lbl {
+            color: #5b4b7c;
+        }
+
+        /* Botón de Acción */
+        .cta-container {
+            padding: 0 20px;
+            margin-bottom: 60px;
+        }
+
+        .btn-main {
+            background: linear-gradient(90deg, #a855f7, #6b21a5);
+            color: white;
+            text-decoration: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 18px;
+            border-radius: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* Sección Categorías / Características */
+        .section-label {
+            padding: 0 20px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #b8a9d4;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        body.light-mode .section-label {
+            color: #6b5d8f;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            margin: 0 20px 15px 20px;
+            padding: 25px;
+            border-radius: 25px;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            transition: background var(--transition), border var(--transition);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+        }
+
+        body.light-mode .feature-card {
+            border: 1px solid rgba(147, 51, 234, 0.2);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(168, 85, 247, 0.2);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #c084fc;
+        }
+
+        .feature-info h3 { margin: 0; font-size: 1.1rem; color: var(--text-main); }
+        .feature-info p { margin: 5px 0 0 0; font-size: 0.8rem; color: var(--text-muted); }
+
+        /* Perfil */
+        .dev-section {
+            background: var(--card-bg);
+            margin: 40px 20px;
+            border-radius: 30px;
+            padding: 30px 20px;
+            text-align: center;
+            border: 1px solid rgba(147, 51, 234, 0.4);
+            transition: background var(--transition), border var(--transition);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+        }
+
+        body.light-mode .dev-section {
+            border: 1px solid rgba(147, 51, 234, 0.15);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+
+        .dev-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 3px solid #c084fc;
+            padding: 5px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+        }
+
+        .dev-name { font-size: 1.5rem; font-weight: 900; margin: 0; color: var(--text-main); }
+        .dev-tag {
+            background: rgba(168, 85, 247, 0.25);
+            color: #d8b4fe;
+            padding: 4px 15px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        body.light-mode .dev-tag {
+            background: rgba(147, 51, 234, 0.1);
+            color: #7c3aed;
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .skill-tag {
+            background: #1b122b;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #cbbaf5;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background var(--transition);
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+
+        body.light-mode .skill-tag {
+            background: #efe6ff;
+            color: #4a2f8a;
+            border: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            border-top: 1px solid rgba(147, 51, 234, 0.2);
+        }
+
+        .footer-logo { font-weight: 900; opacity: 0.7; margin-bottom: 10px; color: #b389f0; }
+        .copyright { font-size: 0.7rem; color: var(--text-muted); }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0; right: -100%;
+            width: 80%; height: 100%;
+            background: var(--sidebar-bg);
+            z-index: 2000;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 40px 25px;
+            box-sizing: border-box;
+            color: var(--text-main);
+            border-left: 1px solid rgba(147, 51, 234, 0.5);
+        }
+        .sidebar.active { right: 0; }
+        .sidebar-link {
+            display: flex; align-items: center; gap: 15px;
+            color: var(--text-main); text-decoration: none;
+            padding: 18px; border-radius: 20px;
+            background: rgba(147, 51, 234, 0.15);
+            margin-bottom: 10px; font-weight: 700;
+            transition: background var(--transition);
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        body.light-mode .sidebar-link {
+            background: rgba(147, 51, 234, 0.05);
+            border: 1px solid rgba(147, 51, 234, 0.15);
+        }
+
+        .sidebar-link:hover {
+            background: rgba(168, 85, 247, 0.3);
+        }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px);
+            display: none; z-index: 1500;
+        }
+        .overlay.active { display: block; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand"><i class="fas fa-microchip" style="color: var(--neon-blue);"></i>KYOKO<span>API</span></div>
+        <div class="header-icons">
+            <div class="btn-circle" onclick="toggleTheme()" id="theme-btn">
+                <i class="fas fa-moon"></i>
+            </div>
+            <div class="btn-circle" onclick="toggleMenu()"><i class="fas fa-bars-staggered"></i></div>
+        </div>
+    </header>
+
+    <div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+    <nav class="sidebar" id="sidebar">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <span style="font-weight: 900; color: var(--neon-blue);">MENU</span>
+            <i class="fas fa-times" onclick="toggleMenu()" style="cursor:pointer;"></i>
+        </div>
+        <a href="/login" class="sidebar-link"><i class="fas fa-key"></i> Iniciar Sesión</a>
+        <a href="/register" class="sidebar-link"><i class="fas fa-user-plus"></i> Registrarse</a>
+        <a href="/dash" class="sidebar-link"><i class="fas fa-terminal"></i> Dashboard</a>
+        <a href="/tos/terms" class="sidebar-link"><i class="fas fa-file-contract"></i> Términos</a>
+    </nav>
+
+    <div class="hero-banner">
+        <div class="hero-shape"></div>
+        <div class="hero-card">
+            <div class="hero-card-inner">
+                <img src="https://raw.githubusercontent.com/LuisCheats/upload/refs/heads/main/3117052ddfa60199310cb51c069065db.jpg" alt="KyokoAPIBanner">
+                <div class="status-badge">
+                    <div class="dot"></div>
+                    Api activa 24/7
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="info-section">
+        <h1>Centro de <span>Funciones</span></h1>
+        <p class="description">Optimiza tus webs y bots con la API De HutaoAPI.</p>
+    </section>
+
+    <div class="stats-container">
+        <div class="stat-item">
+            <span class="val" id="userCount">+0</span>
+            <span class="lbl">Usuarios</span>
+        </div>
+        <div class="stat-item">
+            <span class="val" id="endpointCount">+0</span>
+            <span class="lbl">Endpoints</span>
+        </div>
+        <div class="stat-item">
+            <span class="val">99.9%</span>
+            <span class="lbl">Uptime</span>
+        </div>
+    </div>
+
+    <div class="cta-container">
+        <a href="/register" class="btn-main">Regístrate ahora <i class="fas fa-arrow-right" style="margin-left: 10px;"></i></a>
+    </div>
+
+    <div class="section-label">Características</div>
+
+    <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-bolt"></i></div>
+        <div class="feature-info">
+            <h3>Alta Velocidad</h3>
+            <p>Respuestas procesadas en milisegundos mediante Node.js.</p>
+        </div>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon"><i class="fas fa-shield-virus"></i></div>
+        <div class="feature-info">
+            <h3>Seguridad DvW</h3>
+            <p>ApiKey única para cada una de tus solicitudes.</p>
+        </div>
+    </div>
+
+    <div class="section-label">Desarrollador Principal</div>
+
+    <div class="dev-section">
+        <img src="https://files.catbox.moe/wwp57r.jpg" class="dev-avatar" alt="7Noonly">
+        <h2 class="dev-name">7Noonly</h2>
+        <span class="dev-tag">System Admin & Dev</span>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 15px;">
+            Creador de KyokoAPI, Especialista en diversos ámbitos de programación, principalmente en diseño web.
+        </p>
+        <div class="skill-tags">
+            <div class="skill-tag"><i class="fab fa-node-js"></i> Node.js</div>
+            <div class="skill-tag"><i class="fab fa-js"></i> JavaScript</div>
+            <div class="skill-tag"><i class="fab fa-python"></i> Python</div>
+            <div class="skill-tag"><i class="fas fa-database"></i> SQLite</div>
+            <div class="skill-tag"><i class="fab fa-linux"></i> Linux</div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-logo">KyokoAPI API</div>
+        <div class="copyright">© 2026 KyokoAPI API. All rights reserved.</div>
+    </footer>
+
+    <script>
+        // Función para abrir/cerrar menú
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('overlay').classList.toggle('active');
+        }
+
+        // Función para cambiar el Tema (sincronizado con estilo morado oscuro -> claro real)
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            const icon = themeBtn.querySelector('i');
+
+            body.classList.toggle('light-mode');
+
+            if (body.classList.contains('light-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('dvwilker-theme', 'light');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('dvwilker-theme', 'dark');
+            }
+        }
+
+        // Cargar estadísticas y tema guardado al iniciar
+        async function initPage() {
+            // 1. Verificar tema guardado
+            const savedTheme = localStorage.getItem('dvwilker-theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-btn').querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+
+            // 2. Fetch de estadísticas
+            try {
+                const res = await fetch('/api/auth/stats');
+                const data = await res.json();
+                document.getElementById('userCount').innerText = `+${data.users || 0}`;
+                document.getElementById('endpointCount').innerText = `+${data.endpoints || 0}`;
+            } catch (e) {
+                console.log("Error sincronizando con backend Kurayami");
+                document.getElementById('userCount').innerText = "+250";
+                document.getElementById('endpointCount').innerText = "+150";
+            }
+        }
+
+        window.onload = initPage;
+    </script>
+</body>
+</html>

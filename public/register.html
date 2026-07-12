@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KYOKO API | Registro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        :root { 
+            --neon-blue: #c084fc; 
+            --neon-purple: #9333ea;
+            --dark-bg: #0a0414; 
+            --card-bg: #130b20; 
+            --text-main: #f0eaff;
+            --border-light: rgba(147, 51, 234, 0.3);
+            --input-bg: #0e0719;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.light-mode {
+            --dark-bg: #f5f3ff;
+            --card-bg: #ffffff;
+            --text-main: #1e1b2e;
+            --border-light: rgba(147, 51, 234, 0.2);
+            --input-bg: #faf9fe;
+        }
+
+        body { 
+            background: var(--dark-bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            transition: background var(--transition), color var(--transition);
+        }
+
+        #safety-overlay { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; 
+            z-index: 9999; 
+        }
+
+        .glass { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-light); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            transition: background var(--transition), border var(--transition);
+        }
+
+        body.light-mode .glass {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .input-kazuma { 
+            background: var(--input-bg); 
+            border: 1px solid var(--border-light); 
+            color: var(--text-main) !important; 
+            transition: 0.3s; 
+        }
+
+        .input-kazuma:focus { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(192, 132, 252, 0.4); }
+        .btn-blue { background: linear-gradient(90deg, #a855f7, #6b21a5); transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; color: #fff; }
+        .btn-blue:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        .checkbox-container { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .checkbox-container input { display: none; }
+        .checkmark { height: 18px; width: 18px; background-color: var(--input-bg); border: 1px solid var(--border-light); border-radius: 4px; position: relative; }
+        .checkbox-container input:checked ~ .checkmark { background-color: var(--neon-blue); border-color: var(--neon-blue); }
+        .checkmark:after { content: ""; position: absolute; display: none; left: 6px; top: 2px; width: 5px; height: 10px; border: solid black; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .checkbox-container input:checked ~ .checkmark:after { display: block; }
+
+        .theme-btn-fixed {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: var(--card-bg);
+            border: 1px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--neon-blue);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        /* Ajuste responsivo para Turnstile */
+        .cf-turnstile {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 5px;
+            transform: scale(0.92);
+            transform-origin: center;
+        }
+        @media (max-width: 480px) {
+            .cf-turnstile {
+                transform: scale(0.85);
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div id="safety-overlay"></div>
+
+    <div class="theme-btn-fixed" onclick="toggleTheme()" id="theme-btn">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <div class="glass p-8 rounded-3xl w-full max-w-md my-8">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-black tracking-tighter uppercase">NUEVO <span style="color: var(--neon-blue);">KyokoAPI</span></h2>
+            <p class="text-slate-500 text-[10px] mt-1 uppercase font-bold tracking-widest">Crear Credenciales de Acceso</p>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+            <div class="flex flex-col items-center gap-2">
+                <img id="avatar-preview" src="https://files.catbox.moe/03odwx.jpg" class="w-[80px] h-[80px] rounded-full object-cover border-2" style="border-color: var(--neon-blue);" alt="Vista previa">
+                <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest">Foto de Perfil (opcional)</label>
+                <div class="flex w-full rounded-xl overflow-hidden border" style="border-color: var(--border-light);">
+                    <button type="button" id="tab-upload" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest" style="background: var(--neon-blue); color:#000;">Subir Imagen</button>
+                    <button type="button" id="tab-url" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Usar URL</button>
+                </div>
+                <input type="file" id="avatarFile" accept="image/*" class="input-kazuma w-full rounded-xl p-2 outline-none text-xs">
+                <input type="url" id="avatarUrl" class="input-kazuma w-full rounded-xl p-3 outline-none hidden" placeholder="https://ejemplo.com/mi-foto.jpg">
+                <p class="text-slate-500 text-[10px]">Si no eliges ninguna, se usará una foto por defecto.</p>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Username</label>
+                <input type="text" id="username" class="input-kazuma w-full rounded-xl p-3 outline-none" placeholder="Usuario123" required>
+            </div>
+            <div>
+                <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Email</label>
+                <input type="email" id="email" class="input-kazuma w-full rounded-xl p-3 outline-none" placeholder="correo@ejemplo.com" required>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Password</label>
+                    <input type="password" id="password" class="input-kazuma w-full rounded-xl p-3 outline-none" placeholder="••••" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Confirmar</label>
+                    <input type="password" id="confirmPassword" class="input-kazuma w-full rounded-xl p-3 outline-none" placeholder="••••" required>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="tos" required>
+                    <span class="checkmark"></span>
+                    <span class="text-slate-400 text-[11px] uppercase font-bold tracking-tight">
+                        Acepto los <a href="/tos/terms" class="font-black" style="color: var(--neon-blue);">términos y condiciones</a>
+                    </span>
+                </label>
+            </div>
+
+            <!-- Cloudflare Turnstile Widget -->
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAADLvaFeyyOJwib5p" data-callback="onTurnstileSuccess"></div>
+            <input type="hidden" id="cf-turnstile-response" name="cf-turnstile-response">
+
+            <button type="submit" id="btnSubmit" class="btn-blue w-full py-4 rounded-xl shadow-lg mt-2 font-black">
+                Registrar Cuenta
+            </button>
+        </form>
+
+        <div class="mt-6 flex flex-col gap-3 text-center border-t border-white/5 pt-4">
+            <p class="text-slate-500 text-sm">¿Ya tienes cuenta? <a href="/login" class="font-bold" style="color: var(--neon-blue);">Inicia Sesión</a></p>
+            <a href="mailto:pixelcrewteam@gmail.com" class="py-3 rounded-xl text-[10px] font-black flex items-center justify-center gap-2 transition bg-white/5 text-slate-400 hover:text-white border border-white/10 uppercase tracking-widest">
+                <i class="fas fa-question-circle"></i> Necesitas Ayuda
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            const icon = themeBtn.querySelector('i');
+            body.classList.toggle('light-mode');
+            if (body.classList.contains('light-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('kazuma-theme', 'light');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('kazuma-theme', 'dark');
+            }
+        }
+
+        (function initialCheck() {
+            const user = localStorage.getItem('kazuma_user');
+            const savedTheme = localStorage.getItem('kazuma-theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-btn').querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+            if (user) {
+                window.location.href = '/dash';
+            } else {
+                window.onload = () => { 
+                    document.getElementById('safety-overlay').style.display = 'none'; 
+                };
+            }
+        })();
+
+        // Callback de Turnstile: guarda el token en el campo oculto
+        window.onTurnstileSuccess = function(token) {
+            document.getElementById('cf-turnstile-response').value = token;
+        };
+
+        // ====== Selector de foto de perfil (Subir imagen / URL) ======
+        const DEFAULT_AVATAR = 'https://files.catbox.moe/03odwx.jpg';
+        let avatarMode = 'upload'; // 'upload' | 'url'
+        const tabUpload = document.getElementById('tab-upload');
+        const tabUrl = document.getElementById('tab-url');
+        const avatarFileInput = document.getElementById('avatarFile');
+        const avatarUrlInput = document.getElementById('avatarUrl');
+        const avatarPreview = document.getElementById('avatar-preview');
+
+        function setAvatarMode(mode) {
+            avatarMode = mode;
+            const activeStyle = 'background: var(--neon-blue); color:#000;';
+            if (mode === 'upload') {
+                avatarFileInput.classList.remove('hidden');
+                avatarUrlInput.classList.add('hidden');
+                tabUpload.setAttribute('style', activeStyle);
+                tabUpload.classList.remove('text-slate-400');
+                tabUrl.removeAttribute('style');
+                tabUrl.classList.add('text-slate-400');
+            } else {
+                avatarUrlInput.classList.remove('hidden');
+                avatarFileInput.classList.add('hidden');
+                tabUrl.setAttribute('style', activeStyle);
+                tabUrl.classList.remove('text-slate-400');
+                tabUpload.removeAttribute('style');
+                tabUpload.classList.add('text-slate-400');
+            }
+        }
+        tabUpload.addEventListener('click', () => setAvatarMode('upload'));
+        tabUrl.addEventListener('click', () => setAvatarMode('url'));
+
+        avatarFileInput.addEventListener('change', () => {
+            const file = avatarFileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => { avatarPreview.src = reader.result; };
+            reader.readAsDataURL(file);
+        });
+
+        avatarUrlInput.addEventListener('input', () => {
+            const val = avatarUrlInput.value.trim();
+            avatarPreview.src = val || DEFAULT_AVATAR;
+        });
+        avatarPreview.addEventListener('error', () => { avatarPreview.src = DEFAULT_AVATAR; });
+
+        // Sube la imagen seleccionada a catbox vía el backend y devuelve la URL final
+        async function resolveProfileImg() {
+            if (avatarMode === 'url') {
+                return avatarUrlInput.value.trim() || null;
+            }
+            const file = avatarFileInput.files[0];
+            if (!file) return null;
+
+            const fd = new FormData();
+            fd.append('image', file);
+            const res = await fetch('/api/auth/upload-avatar', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (!data.status) throw new Error(data.message || 'No se pudo subir la imagen');
+            return data.url;
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Obtener el token de Turnstile
+            const turnstileToken = document.getElementById('cf-turnstile-response').value;
+            if (!turnstileToken) {
+                Swal.fire({
+                    title: 'Verificación requerida',
+                    text: 'Por favor completa el desafío de Cloudflare Turnstile.',
+                    icon: 'warning',
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-main)',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
+            const pass = document.getElementById('password').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            if (pass !== confirm) {
+                return Swal.fire({ title: 'Error', text: 'Las contraseñas no coinciden', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = 'PROCESANDO...';
+
+            try {
+                let profileImg = null;
+                try {
+                    btn.innerText = 'SUBIENDO FOTO...';
+                    profileImg = await resolveProfileImg();
+                } catch (imgErr) {
+                    btn.disabled = false;
+                    btn.innerText = 'Registrar Cuenta';
+                    return Swal.fire({ title: 'Error con la foto', text: imgErr.message, icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                }
+
+                btn.innerText = 'PROCESANDO...';
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('username').value,
+                        email: document.getElementById('email').value,
+                        password: pass,
+                        profile_img: profileImg,
+                        turnstileToken: turnstileToken   // Token de Cloudflare
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.status) {
+                    Swal.fire({
+                        title: 'REGISTRO EXITOSO',
+                        html: `<p>Tu cuenta ha sido creada.</p><br><p style="color:var(--neon-blue); font-weight:bold; font-size:12px;">TU API KEY: ${data.key}</p>`,
+                        icon: 'success',
+                        background: 'var(--card-bg)',
+                        color: 'var(--text-main)',
+                        confirmButtonText: 'IR AL DASHBOARD',
+                        confirmButtonColor: '#c084fc'
+                    }).then(() => {
+                        document.getElementById('safety-overlay').style.display = 'block';
+                        window.location.href = '/dash';
+                    });
+                } else {
+                    Swal.fire({ title: 'Error', text: data.message, icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                    btn.disabled = false;
+                    btn.innerText = 'Registrar Cuenta';
+                    // Resetear Turnstile (si es necesario)
+                    turnstile.reset();
+                    document.getElementById('cf-turnstile-response').value = '';
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerText = 'Registrar Cuenta';
+                Swal.fire({ title: 'Error', text: 'Fallo al conectar con el servidor', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                turnstile.reset();
+                document.getElementById('cf-turnstile-response').value = '';
+            }
+        });
+    </script>
+</body>
+</html>

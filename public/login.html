@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KyokoAPI API | Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <style>
+        :root { 
+            --neon-blue: #c084fc; 
+            --neon-purple: #9333ea;
+            --dark-bg: #0a0414; 
+            --card-bg: #130b20; 
+            --text-main: #f0eaff;
+            --border-light: rgba(147, 51, 234, 0.3);
+            --input-bg: #0e0719;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modo Claro real */
+        body.light-mode {
+            --dark-bg: #f5f3ff;
+            --card-bg: #ffffff;
+            --text-main: #1e1b2e;
+            --border-light: rgba(147, 51, 234, 0.2);
+            --input-bg: #faf9fe;
+        }
+
+        body { 
+            background: var(--dark-bg); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            transition: background var(--transition), color var(--transition);
+        }
+
+        /* Pantalla negra absoluta de seguridad */
+        #safety-overlay { 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; 
+            z-index: 9999; 
+        }
+
+        .glass { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-light); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            transition: background var(--transition), border var(--transition);
+        }
+
+        body.light-mode .glass {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        .input-kazuma { 
+            background: var(--input-bg); 
+            border: 1px solid var(--border-light); 
+            color: var(--text-main) !important; 
+            transition: 0.3s; 
+        }
+
+        .input-kazuma:focus { border-color: var(--neon-blue); box-shadow: 0 0 12px rgba(192, 132, 252, 0.4); }
+        .btn-blue { background: linear-gradient(90deg, #a855f7, #6b21a5); transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; font-weight: 900; color: #fff; }
+        .btn-blue:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        .theme-btn-fixed {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 45px;
+            height: 45px;
+            background: var(--card-bg);
+            border: 1px solid var(--neon-blue);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--neon-blue);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        /* Ajuste responsivo para Turnstile */
+        .cf-turnstile {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 5px;
+            transform: scale(0.92);
+            transform-origin: center;
+        }
+        @media (max-width: 480px) {
+            .cf-turnstile {
+                transform: scale(0.85);
+            }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="safety-overlay"></div>
+
+    <div class="theme-btn-fixed" onclick="toggleTheme()" id="theme-btn">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <div class="glass p-8 rounded-3xl w-full max-w-md">
+        <div class="text-center mb-6">
+            <h2 class="text-3xl font-black tracking-tighter uppercase">KYOKO <span style="color: var(--neon-blue);">API</span></h2>
+            <p class="text-slate-500 text-[10px] mt-1 uppercase font-bold tracking-widest">Protocolo de Acceso Kurayami</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Email</label>
+                <input type="email" id="email" class="input-kazuma w-full rounded-xl p-4 outline-none" placeholder="admin@kyoko.com" required>
+            </div>
+            <div class="relative">
+                <label class="block text-[10px] font-black text-slate-500 mb-1 uppercase tracking-widest">Password</label>
+                <input type="password" id="password" class="input-kazuma w-full rounded-xl p-4 outline-none" placeholder="••••••••" required>
+                <i class="fas fa-eye absolute right-4 top-10 cursor-pointer text-slate-600" onclick="togglePassword('password', this)"></i>
+            </div>
+
+            <!-- Cloudflare Turnstile Widget -->
+            <div class="cf-turnstile" data-sitekey="0x4AAAAAADLvaFeyyOJwib5p" data-callback="onTurnstileSuccess"></div>
+            <input type="hidden" id="cf-turnstile-response" name="cf-turnstile-response">
+
+            <button type="submit" id="btnSubmit" class="btn-blue w-full py-4 rounded-xl shadow-lg font-black">
+                Entrar al Sistema
+            </button>
+        </form>
+
+        <div class="mt-6 text-center border-t border-white/5 pt-4">
+            <p class="text-slate-500 text-sm">¿Nuevo en KyokoAPI? <a href="/register" class="font-bold" style="color: var(--neon-blue);">Crea tu cuenta</a></p>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            const icon = themeBtn.querySelector('i');
+            body.classList.toggle('light-mode');
+            if (body.classList.contains('light-mode')) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('kazuma-theme', 'light');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('kazuma-theme', 'dark');
+            }
+        }
+
+        // Blindaje de Seguridad Instantáneo
+        (function initialCheck() {
+            const user = localStorage.getItem('kazuma_user');
+            const savedTheme = localStorage.getItem('kazuma-theme');
+
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-btn').querySelector('i').classList.replace('fa-moon', 'fa-sun');
+            }
+
+            if (user) {
+                window.location.href = '/dash';
+            } else {
+                window.onload = () => { 
+                    document.getElementById('safety-overlay').style.display = 'none'; 
+                };
+            }
+        })();
+
+        function togglePassword(id, el) {
+            const input = document.getElementById(id);
+            input.type = input.type === "password" ? "text" : "password";
+            el.classList.toggle("fa-eye");
+            el.classList.toggle("fa-eye-slash");
+        }
+
+        // Callback de Turnstile: guarda el token en el campo oculto
+        window.onTurnstileSuccess = function(token) {
+            document.getElementById('cf-turnstile-response').value = token;
+        };
+
+        // Formulario con validación de Turnstile
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Obtener el token de Turnstile
+            const turnstileToken = document.getElementById('cf-turnstile-response').value;
+            if (!turnstileToken) {
+                Swal.fire({
+                    title: 'Verificación requerida',
+                    text: 'Por favor completa el desafío de Cloudflare Turnstile.',
+                    icon: 'warning',
+                    background: 'var(--card-bg)',
+                    color: 'var(--text-main)',
+                    confirmButtonText: 'Entendido'
+                });
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerText = 'AUTENTICANDO...';
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('email').value,
+                        password: document.getElementById('password').value,
+                        turnstileToken: turnstileToken   // Enviar token al backend
+                    })
+                });
+
+                const data = await res.json();
+                if (data.status) {
+                    localStorage.setItem('kazuma_user', JSON.stringify(data.data));
+                    document.getElementById('safety-overlay').style.display = 'block';
+                    window.location.href = '/dash';
+                } else {
+                    throw new Error(data.message || "Error de autenticación");
+                }
+            } catch (err) {
+                Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                btn.disabled = false;
+                btn.innerText = 'Entrar al Sistema';
+                // Reiniciar Turnstile en caso de error
+                if (typeof turnstile !== 'undefined') {
+                    turnstile.reset();
+                }
+                document.getElementById('cf-turnstile-response').value = '';
+            }
+        });
+    </script>
+</body>
+</html>

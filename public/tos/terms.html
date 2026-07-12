@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TOS | KYOKO API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-blue: #c084fc;
+            --neon-purple: #9333ea;
+            --dark-bg: #0a0414;
+            --card-bg: #130b20;
+            --text-main: #f0eaff;
+            --text-muted: #b8a9d4;
+            --border-color: rgba(147, 51, 234, 0.3);
+            --glass-bg: rgba(19, 11, 32, 0.8);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Modo claro real */
+        body.light-mode {
+            --dark-bg: #f8f7fc;
+            --card-bg: #ffffff;
+            --text-main: #1e1b2e;
+            --text-muted: #6b5d8f;
+            --border-color: rgba(147, 51, 234, 0.2);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            transition: background var(--transition), border var(--transition);
+        }
+
+        .neon-text-blue {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
+            transition: text-shadow var(--transition);
+        }
+
+        .section-title {
+            border-left: 3px solid var(--neon-blue);
+            padding-left: 15px;
+            margin-bottom: 20px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            color: var(--neon-blue);
+        }
+
+        .tos-content p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            transition: color var(--transition);
+        }
+
+        .back-btn {
+            background: rgba(147, 51, 234, 0.1);
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+            color: var(--neon-blue);
+            cursor: pointer;
+            padding: 8px 20px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+        .back-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(192, 132, 252, 0.4);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            transition: transform 0.3s;
+            color: var(--neon-blue);
+            font-size: 1.2rem;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        footer p {
+            transition: color var(--transition);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-3xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div class="text-xl font-black tracking-tighter">
+                KYOKO <span class="neon-text-blue">TOS</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="theme-toggle" onclick="toggleTheme()" id="theme-btn">
+                    <i class="fas fa-moon"></i>
+                </div>
+                <button onclick="history.back()" class="back-btn">
+                    Volver
+                </button>
+            </div>
+        </header>
+
+        <div class="glass-panel p-8 rounded-[2rem] shadow-2xl">
+            <h1 class="text-3xl font-black mb-2 tracking-tighter">Términos de <span style="color: var(--neon-blue);">Servicio</span></h1>
+            <p class="text-slate-500 text-xs mb-8 uppercase tracking-widest">Última actualización: Mayo 2026</p>
+
+            <div class="tos-content">
+                <div class="section-title">1. Uso del Servicio Gratuito</div>
+                <p>KyokoAPI es un servicio proporcionado de forma gratuita por <strong>7Noonly</strong>. El acceso a los endpoints está sujeto a límites razonables para garantizar la estabilidad del servidor para todos los desarrolladores.</p>
+
+                <div class="section-title">2. Política Anti-Abuso</div>
+                <p>Queda estrictamente prohibido cualquier intento de "Spamming" o inundación de peticiones (Flooding) hacia nuestros servidores. El uso de scripts para saturar los endpoints resultará en la revocación inmediata de la API Key y el bloqueo permanente de la IP.</p>
+
+                <div class="section-title">3. Restricción de Multicuentas</div>
+                <p>Cada desarrollador tiene permitido poseer <strong>una sola cuenta</strong> por dispositivo/identidad. La creación de multicuentas para evadir los límites diarios de peticiones es detectada por nuestro sistema de seguridad y conlleva al baneo de todas las cuentas asociadas sin previo aviso.</p>
+
+                <div class="section-title">4. Responsabilidad del Contenido</div>
+                <p>Api Kazuma actúa únicamente como una herramienta de procesamiento. No almacenamos los archivos descargados ni nos hacemos responsables por el uso que los usuarios den a los datos obtenidos a través de los scrapers de redes sociales o IA.</p>
+
+                <div class="section-title">5. Estabilidad y Cambios</div>
+                <p>Al ser un proyecto gratuito, no garantizamos un uptime del 100%. Nos reservamos el derecho de modificar, suspender o eliminar endpoints (como ha ocurrido con servicios de música externos) según la disponibilidad de las fuentes y la seguridad de la infraestructura.</p>
+
+                <div class="section-title">6. Soporte y Contacto</div>
+                <p>Para reportar fallos o solicitar asistencia técnica, los usuarios deben dirigirse únicamente a los canales oficiales (WhatsApp o Correo) proporcionados en el Dashboard principal.</p>
+            </div>
+
+            <div class="mt-10 p-6 rounded-2xl bg-white/5 border border-white/5 text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Al registrarte en KyokoAPI, aceptas estos términos automáticamente.</p>
+            </div>
+        </div>
+
+        <footer class="mt-10 text-center">
+            <p class="text-slate-700 text-[9px] font-bold uppercase tracking-[0.3em]">&copy; 2026 KYOKO INFRASTRUCTURE | BY DvWilkerOFC</p>
+        </footer>
+    </div>
+
+    <script>
+        // Cargar tema guardado
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('dvwilker-theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                const themeBtn = document.getElementById('theme-btn');
+                if (themeBtn) {
+                    const icon = themeBtn.querySelector('i');
+                    icon.classList.replace('fa-moon', 'fa-sun');
+                }
+            }
+        }
+
+        // Alternar tema
+        function toggleTheme() {
+            const body = document.body;
+            const themeBtn = document.getElementById('theme-btn');
+            const icon = themeBtn.querySelector('i');
+            body.classList.toggle('light-mode');
+            const isLight = body.classList.contains('light-mode');
+            icon.classList.replace(isLight ? 'fa-moon' : 'fa-sun', isLight ? 'fa-sun' : 'fa-moon');
+            localStorage.setItem('dvwilker-theme', isLight ? 'light' : 'dark');
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', loadTheme);
+    </script>
+</body>
+</html>
