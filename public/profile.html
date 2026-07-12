@@ -158,11 +158,16 @@
 
                 <div class="grid gap-5">
                     <div>
-                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Avatar (URL)</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="new-img" class="input-kazuma w-full p-3 rounded-xl text-sm" placeholder="URL directa">
-                            <button onclick="updateData('profile_img')" class="btn-blue px-5 rounded-xl text-[10px]">Actualizar</button>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Foto de Perfil</label>
+                        <div class="flex w-full rounded-xl overflow-hidden border border-white/10 mb-2">
+                            <button type="button" id="tab-upload" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest" style="background: var(--neon-blue); color:#000;">Subir Imagen</button>
+                            <button type="button" id="tab-url" class="flex-1 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">Usar URL</button>
                         </div>
+                        <input type="file" id="avatarFile" accept="image/*" class="input-kazuma w-full p-2 rounded-xl text-xs mb-2">
+                        <div id="url-row" class="flex gap-2 hidden">
+                            <input type="url" id="new-img" class="input-kazuma w-full p-3 rounded-xl text-sm" placeholder="https://ejemplo.com/mi-foto.jpg">
+                        </div>
+                        <button onclick="updateAvatar()" class="btn-blue w-full py-3 rounded-xl text-[10px] mt-2">Actualizar Foto</button>
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 mb-2 uppercase">Usuario</label>
@@ -223,7 +228,7 @@
         }
 
         async function updateData(type) {
-            const inputMap = { 'username': 'new-username', 'password': 'new-pass', 'profile_img': 'new-img' };
+            const inputMap = { 'username': 'new-username', 'password': 'new-pass' };
             const val = document.getElementById(inputMap[type]).value.trim();
             if (!val) return;
 
@@ -236,12 +241,79 @@
                 const data = await res.json();
                 if (data.status) {
                     if (type !== 'password') {
-                        userData[type === 'profile_img' ? 'profile_img' : type] = val;
+                        userData[type] = val;
                         localStorage.setItem('kazuma_user', JSON.stringify(userData));
                     }
                     Swal.fire({ title: 'Listo', text: 'Datos guardados', icon: 'success', background: 'var(--card-bg)', color: 'var(--text-main)' }).then(() => location.reload());
                 }
             } catch (e) { console.error("Error al actualizar"); }
+        }
+
+        // ====== Selector de foto de perfil (Subir imagen / URL) ======
+        let avatarMode = 'upload'; // 'upload' | 'url'
+        const tabUpload = document.getElementById('tab-upload');
+        const tabUrl = document.getElementById('tab-url');
+        const avatarFileInput = document.getElementById('avatarFile');
+        const urlRow = document.getElementById('url-row');
+        const newImgInput = document.getElementById('new-img');
+
+        function setAvatarMode(mode) {
+            avatarMode = mode;
+            const activeStyle = 'background: var(--neon-blue); color:#000;';
+            if (mode === 'upload') {
+                avatarFileInput.classList.remove('hidden');
+                urlRow.classList.add('hidden');
+                tabUpload.setAttribute('style', activeStyle);
+                tabUpload.classList.remove('text-slate-400');
+                tabUrl.removeAttribute('style');
+                tabUrl.classList.add('text-slate-400');
+            } else {
+                urlRow.classList.remove('hidden');
+                avatarFileInput.classList.add('hidden');
+                tabUrl.setAttribute('style', activeStyle);
+                tabUrl.classList.remove('text-slate-400');
+                tabUpload.removeAttribute('style');
+                tabUpload.classList.add('text-slate-400');
+            }
+        }
+        tabUpload.addEventListener('click', () => setAvatarMode('upload'));
+        tabUrl.addEventListener('click', () => setAvatarMode('url'));
+
+        async function updateAvatar() {
+            let url = null;
+
+            try {
+                if (avatarMode === 'url') {
+                    url = newImgInput.value.trim();
+                    if (!url) return Swal.fire({ title: 'Error', text: 'Pega una URL válida', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                } else {
+                    const file = avatarFileInput.files[0];
+                    if (!file) return Swal.fire({ title: 'Error', text: 'Elige una imagen', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+
+                    const fd = new FormData();
+                    fd.append('image', file);
+                    const uploadRes = await fetch('/api/auth/upload-avatar', { method: 'POST', body: fd });
+                    const uploadData = await uploadRes.json();
+                    if (!uploadData.status) throw new Error(uploadData.message || 'No se pudo subir la imagen');
+                    url = uploadData.url;
+                }
+
+                const res = await fetch(`/api/auth/update-profile`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ apiKey: userData.key, type: 'profile_img', value: url })
+                });
+                const data = await res.json();
+                if (data.status) {
+                    userData.profile_img = url;
+                    localStorage.setItem('kazuma_user', JSON.stringify(userData));
+                    Swal.fire({ title: 'Listo', text: 'Foto de perfil actualizada', icon: 'success', background: 'var(--card-bg)', color: 'var(--text-main)' }).then(() => location.reload());
+                } else {
+                    Swal.fire({ title: 'Error', text: data.message || 'No se pudo actualizar', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+                }
+            } catch (e) {
+                Swal.fire({ title: 'Error', text: e.message || 'Fallo al actualizar la foto', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
+            }
         }
 
         function copyKey() {

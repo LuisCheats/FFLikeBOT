@@ -326,6 +326,10 @@ router.post('/update-profile', async (req, res) => {
             return res.status(400).json({ status: false, message: "Acción no permitida para este campo" });
         }
 
+        if (type === 'profile_img' && !esUrlValida(value)) {
+            return res.status(400).json({ status: false, message: "La URL de la foto de perfil no es válida" });
+        }
+
         user[type] = value;
         await user.save();
 
