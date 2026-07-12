@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         :root { 
             --neon-blue: #c084fc; 
@@ -91,19 +89,6 @@
             transition: var(--transition);
         }
 
-        /* Ajuste responsivo para Turnstile */
-        .cf-turnstile {
-            display: flex;
-            justify-content: center;
-            margin: 10px 0 5px;
-            transform: scale(0.92);
-            transform-origin: center;
-        }
-        @media (max-width: 480px) {
-            .cf-turnstile {
-                transform: scale(0.85);
-            }
-        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -160,10 +145,6 @@
                 </label>
             </div>
 
-            <!-- Cloudflare Turnstile Widget -->
-            <div class="cf-turnstile" data-sitekey="0x4AAAAAADLvaFeyyOJwib5p" data-callback="onTurnstileSuccess"></div>
-            <input type="hidden" id="cf-turnstile-response" name="cf-turnstile-response">
-
             <button type="submit" id="btnSubmit" class="btn-blue w-full py-4 rounded-xl shadow-lg mt-2 font-black">
                 Registrar Cuenta
             </button>
@@ -207,11 +188,6 @@
                 };
             }
         })();
-
-        // Callback de Turnstile: guarda el token en el campo oculto
-        window.onTurnstileSuccess = function(token) {
-            document.getElementById('cf-turnstile-response').value = token;
-        };
 
         // ====== Selector de foto de perfil (Subir imagen / URL) ======
         const DEFAULT_AVATAR = 'https://files.catbox.moe/03odwx.jpg';
@@ -277,20 +253,6 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Obtener el token de Turnstile
-            const turnstileToken = document.getElementById('cf-turnstile-response').value;
-            if (!turnstileToken) {
-                Swal.fire({
-                    title: 'Verificación requerida',
-                    text: 'Por favor completa el desafío de Cloudflare Turnstile.',
-                    icon: 'warning',
-                    background: 'var(--card-bg)',
-                    color: 'var(--text-main)',
-                    confirmButtonText: 'Entendido'
-                });
-                return;
-            }
-
             const pass = document.getElementById('password').value;
             const confirm = document.getElementById('confirmPassword').value;
 
@@ -321,8 +283,7 @@
                         username: document.getElementById('username').value,
                         email: document.getElementById('email').value,
                         password: pass,
-                        profile_img: profileImg,
-                        turnstileToken: turnstileToken   // Token de Cloudflare
+                        profile_img: profileImg
                     })
                 });
 
@@ -345,16 +306,11 @@
                     Swal.fire({ title: 'Error', text: data.message, icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
                     btn.disabled = false;
                     btn.innerText = 'Registrar Cuenta';
-                    // Resetear Turnstile (si es necesario)
-                    turnstile.reset();
-                    document.getElementById('cf-turnstile-response').value = '';
                 }
             } catch (err) {
                 btn.disabled = false;
                 btn.innerText = 'Registrar Cuenta';
                 Swal.fire({ title: 'Error', text: 'Fallo al conectar con el servidor', icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
-                turnstile.reset();
-                document.getElementById('cf-turnstile-response').value = '';
             }
         });
     </script>

@@ -7,8 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <!-- Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <style>
         :root { 
             --neon-blue: #c084fc; 
@@ -86,19 +84,6 @@
             transition: var(--transition);
         }
 
-        /* Ajuste responsivo para Turnstile */
-        .cf-turnstile {
-            display: flex;
-            justify-content: center;
-            margin: 10px 0 5px;
-            transform: scale(0.92);
-            transform-origin: center;
-        }
-        @media (max-width: 480px) {
-            .cf-turnstile {
-                transform: scale(0.85);
-            }
-        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -125,10 +110,6 @@
                 <input type="password" id="password" class="input-kazuma w-full rounded-xl p-4 outline-none" placeholder="••••••••" required>
                 <i class="fas fa-eye absolute right-4 top-10 cursor-pointer text-slate-600" onclick="togglePassword('password', this)"></i>
             </div>
-
-            <!-- Cloudflare Turnstile Widget -->
-            <div class="cf-turnstile" data-sitekey="0x4AAAAAADLvaFeyyOJwib5p" data-callback="onTurnstileSuccess"></div>
-            <input type="hidden" id="cf-turnstile-response" name="cf-turnstile-response">
 
             <button type="submit" id="btnSubmit" class="btn-blue w-full py-4 rounded-xl shadow-lg font-black">
                 Entrar al Sistema
@@ -181,28 +162,8 @@
             el.classList.toggle("fa-eye-slash");
         }
 
-        // Callback de Turnstile: guarda el token en el campo oculto
-        window.onTurnstileSuccess = function(token) {
-            document.getElementById('cf-turnstile-response').value = token;
-        };
-
-        // Formulario con validación de Turnstile
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            // Obtener el token de Turnstile
-            const turnstileToken = document.getElementById('cf-turnstile-response').value;
-            if (!turnstileToken) {
-                Swal.fire({
-                    title: 'Verificación requerida',
-                    text: 'Por favor completa el desafío de Cloudflare Turnstile.',
-                    icon: 'warning',
-                    background: 'var(--card-bg)',
-                    color: 'var(--text-main)',
-                    confirmButtonText: 'Entendido'
-                });
-                return;
-            }
 
             const btn = document.getElementById('btnSubmit');
             btn.disabled = true;
@@ -214,8 +175,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         email: document.getElementById('email').value,
-                        password: document.getElementById('password').value,
-                        turnstileToken: turnstileToken   // Enviar token al backend
+                        password: document.getElementById('password').value
                     })
                 });
 
@@ -231,11 +191,6 @@
                 Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: 'var(--card-bg)', color: 'var(--text-main)' });
                 btn.disabled = false;
                 btn.innerText = 'Entrar al Sistema';
-                // Reiniciar Turnstile en caso de error
-                if (typeof turnstile !== 'undefined') {
-                    turnstile.reset();
-                }
-                document.getElementById('cf-turnstile-response').value = '';
             }
         });
     </script>
